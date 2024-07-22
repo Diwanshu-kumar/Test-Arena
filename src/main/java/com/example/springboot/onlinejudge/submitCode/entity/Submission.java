@@ -5,6 +5,9 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
+import java.time.LocalDateTime;
+import java.util.Date;
+
 
 @Entity
 public class Submission {
@@ -17,11 +20,12 @@ public class Submission {
     private String language;
     private String status;
     private String result;
+    private LocalDateTime submissionTime;
+    private String executionTime;
 
-    public Submission(){
+    public Submission() {}
 
-    }
-    public Submission(Long submissionId, Long userId, Long problemId, String code, String language, String status, String result) {
+    public Submission(Long submissionId, Long userId, Long problemId, String code, String language, String status, String result, LocalDateTime submissionTime, String executionTime) {
         this.submissionId = submissionId;
         this.userId = userId;
         this.problemId = problemId;
@@ -29,6 +33,24 @@ public class Submission {
         this.language = language;
         this.status = status;
         this.result = result;
+        this.submissionTime = submissionTime;
+        this.executionTime = executionTime;
+    }
+
+    public LocalDateTime getSubmissionTime() {
+        return submissionTime;
+    }
+
+    public void setSubmissionTime(LocalDateTime submissionTime) {
+        this.submissionTime = submissionTime;
+    }
+
+    public String getExecutionTime() {
+        return executionTime;
+    }
+
+    public void setExecutionTime(String executionTime) {
+        this.executionTime = executionTime;
     }
 
     public Long getSubmissionId() {

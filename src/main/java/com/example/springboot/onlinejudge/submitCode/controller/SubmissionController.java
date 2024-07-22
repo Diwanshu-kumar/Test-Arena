@@ -20,18 +20,18 @@ public class SubmissionController {
     public SubmissionStatus submitCode(@RequestBody CodeSubmissionRequest codeSubmissionRequest){
         System.out.println(codeSubmissionRequest);
         var result = submissionService.processSubmission(codeSubmissionRequest);
-        System.out.println(result);
+//        System.out.println(result);
         return result;
     }
 
     @PostMapping("run")
     public SubmissionStatus runCode(@RequestBody CodeSubmissionRequest codeSubmissionRequest){
         System.out.println("run : "+ codeSubmissionRequest);
-        return new SubmissionStatus(1,"","");
+        return new SubmissionStatus("","");
     }
 
     @GetMapping("status{submissionId}")
     public SubmissionStatus getStatus(@PathVariable String submissionId){
-        return new SubmissionStatus(1,"","");
+        return new SubmissionStatus("","");
     }
 }
