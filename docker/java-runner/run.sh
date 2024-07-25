@@ -1,19 +1,20 @@
 #!/bin/bash
 
 # Read the code from standard input
-code=$(cat -)
+#code=$(cat -)
 
 # Write the code to a file
-echo "$code" > Main.java
+#echo "$code" > Main.java
 
 # Compile the Java code and capture errors
+#javac Main.java
 javac Main.java 2> error.log
 
 # Check if compilation was successful
 if [ $? -ne 0 ]; then
     # If there was an error, return the error log
-    echo "Compilation error"
-    cat error.log
+    echo "Compilation error" >status.txt
+#    cat error.log > error.txt
 else
     # If compilation was successful, execute the program and capture output and time
 
@@ -21,7 +22,7 @@ else
     START=$(date +%s%N)
 
     # Run Java program
-    output=$(java Main 2>&1)
+    output=$(java Main <input.txt 2>&1)
     program_exit_code=$?
 
     # Capture end time in nanoseconds
@@ -31,12 +32,12 @@ else
     ELAPSED_TIME=$(($(($END - $START)) / 1000000))
 
     if [ $program_exit_code -ne 0 ]; then
-        echo "Runtime error"
-        echo "$output"
-        echo "Execution time: $ELAPSED_TIME ms"
+        echo "Runtime error" > status.txt
+        echo "$output" > error.txt
+        echo "Execution time: $ELAPSED_TIME ms" >executionTime.txt
     else
-        echo "Compilation successful"
-        echo "$output"
-        echo "Execution time: $ELAPSED_TIME ms"
+        echo "Compilation successful" > status.txt
+        echo "$output" > output.txt
+        echo "Execution time: $ELAPSED_TIME ms" > executionTime.txt
     fi
 fi
