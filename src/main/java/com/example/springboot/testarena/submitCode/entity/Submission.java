@@ -1,9 +1,6 @@
 package com.example.springboot.testarena.submitCode.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
@@ -15,9 +12,11 @@ public class Submission {
     private Long submissionId;
     private Long userId;
     private Long problemId;
+    @Column(columnDefinition = "MEDIUMTEXT")
     private String code;
     private String language;
     private String status;
+    @Column(columnDefinition = "MEDIUMTEXT")
     private String result;
     private LocalDateTime submissionTime;
     private String executionTime;
