@@ -23,6 +23,11 @@ public class Problem {
 
     private String status;
 
+    @Column(columnDefinition = "TEXT")
+    private String sampleInput;
+
+    @Column(columnDefinition = "TEXT")
+    private String sampleOutput;
 
     public long getProblemId() {
         return problemId;
@@ -78,5 +83,21 @@ public class Problem {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getSampleInput() {
+        return sampleInput;
+    }
+
+    public void setSampleInput(String sampleInput) {
+        this.sampleInput = sampleInput;
+    }
+
+    public String getSampleOutput() {
+        return sampleOutput;
+    }
+
+    public void setSampleOutput(String sampleOutput) {
+        this.sampleOutput = sampleOutput;
     }
 }

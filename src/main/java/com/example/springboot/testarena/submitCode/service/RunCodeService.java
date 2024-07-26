@@ -3,7 +3,6 @@ package com.example.springboot.testarena.submitCode.service;
 import com.example.springboot.testarena.problem.entity.Problem;
 import com.example.springboot.testarena.problem.entity.SystemTestCase;
 import com.example.springboot.testarena.problem.repository.ProblemRepository;
-import com.example.springboot.testarena.problem.repository.SampleTestCaseRepository;
 import com.example.springboot.testarena.problem.repository.SystemTestCaseRepository;
 import com.example.springboot.testarena.submitCode.dto.CodeSubmissionRequest;
 import com.example.springboot.testarena.submitCode.dto.SubmissionStatus;
@@ -37,7 +36,7 @@ public class RunCodeService {
     private final ProblemRepository problemRepository;
     private final SystemTestCaseRepository systemTestCaseRepository;
 
-    public RunCodeService(ProblemRepository problemRepository, SampleTestCaseRepository sampleTestCaseRepository, SystemTestCaseRepository systemTestCaseRepository, SubmissionRepository submissionRepository) {
+    public RunCodeService(ProblemRepository problemRepository, SystemTestCaseRepository systemTestCaseRepository, SubmissionRepository submissionRepository) {
         this.problemRepository = problemRepository;
         this.systemTestCaseRepository = systemTestCaseRepository;
         this.submissionRepository = submissionRepository;

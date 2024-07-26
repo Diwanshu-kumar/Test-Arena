@@ -16,18 +16,20 @@ public class ProblemSubmissionRequest {
 
     private String explanation;
 
-    private List<TestCase> sampleTestCase;
+    private String sampleInput;
+    private String sampleOutput;
 
     private List<TestCase> systemTestCase;
 
 
-    public ProblemSubmissionRequest(String title, String description, String author, String problemConstraint, String explanation, List<TestCase> sampleTestCase, List<TestCase> systemTestCase) {
+    public ProblemSubmissionRequest(String title, String description, String author, String problemConstraint, String explanation, String sampleInput, String sampleOutput, List<TestCase> systemTestCase) {
         this.title = title;
         this.description = description;
         this.author = author;
         this.problemConstraint = problemConstraint;
         this.explanation = explanation;
-        this.sampleTestCase = sampleTestCase;
+        this.sampleInput = sampleInput;
+        this.sampleOutput = sampleOutput;
         this.systemTestCase = systemTestCase;
     }
 
@@ -71,19 +73,27 @@ public class ProblemSubmissionRequest {
         this.explanation = explanation;
     }
 
-    public List<TestCase> getSampleTestCase() {
-        return sampleTestCase;
-    }
-
-    public void setSampleTestCase(List<TestCase> sampleTestCase) {
-        this.sampleTestCase = sampleTestCase;
-    }
-
     public List<TestCase> getSystemTestCase() {
         return systemTestCase;
     }
 
     public void setSystemTestCase(List<TestCase> systemTestCase) {
         this.systemTestCase = systemTestCase;
+    }
+
+    public String getSampleInput() {
+        return sampleInput;
+    }
+
+    public void setSampleInput(String sampleInput) {
+        this.sampleInput = sampleInput;
+    }
+
+    public String getSampleOutput() {
+        return sampleOutput;
+    }
+
+    public void setSampleOutput(String sampleOutput) {
+        this.sampleOutput = sampleOutput;
     }
 }
