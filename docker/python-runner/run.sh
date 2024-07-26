@@ -16,11 +16,11 @@ END=$(date +%s%N)
 ELAPSED_TIME=$(($(($END - $START)) / 1000000))
 
 if [ $program_exit_code -ne 0 ]; then
-    echo "Runtime error" > status.txt
+    echo "Runtime error"
     echo "$output" > error.txt
     echo $ELAPSED_TIME >executionTime.txt
 else
-    echo "Compilation successful" > status.txt
+    echo "Compilation successful"
     echo "$output" > output.txt
     echo $ELAPSED_TIME >executionTime.txt
 fi

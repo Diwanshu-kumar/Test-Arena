@@ -9,7 +9,7 @@ g++ -o main main.cpp 2> error.txt
 # Check if compilation was successful
 if [ $? -ne 0 ]; then
     # If there was an error, return the error log
-    echo "Compilation error" >status.txt
+    echo "Compilation error"
 else
     # If compilation was successful, execute the program and capture output and time
 
@@ -27,11 +27,11 @@ else
     ELAPSED_TIME=$(($(($END - $START)) / 1000000))
 
     if [ $program_exit_code -ne 0 ]; then
-        echo "Runtime error" > status.txt
+        echo "Runtime error"
         echo "$output" > error.txt
         echo $ELAPSED_TIME >executionTime.txt
     else
-        echo "Compilation successful" > status.txt
+        echo "Compilation successful"
         echo "$output" > output.txt
         echo $ELAPSED_TIME >executionTime.txt
     fi

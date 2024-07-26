@@ -22,6 +22,12 @@ import java.util.concurrent.*;
 
 @Service
 public class RunCodeService {
+
+
+    public record RunningResult(String verdict,int executionTime){}
+
+
+
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final ProblemRepository problemRepository;
     private final SystemTestCaseRepository systemTestCaseRepository;
@@ -60,7 +66,6 @@ public class RunCodeService {
         return new SubmissionStatus(result.toString(),"",String.valueOf(maximumExecutionTime));
     }
 
-    public record RunningResult(String verdict,int executionTime){}
 
 
 
@@ -71,15 +76,23 @@ public class RunCodeService {
 
 
         String result;
-        Future<String> future = executor.submit(this::executeCode);
+        String language = codeSubmissionRequest.language().toLowerCase();
+        Future<String> future = executor.submit(()->executeCode(language));
         try {
-            result = future.get(3, TimeUnit.SECONDS);
+            result = future.get(getTimeLimit(language), TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             result = "Time Limit Exceeded \n";
             future.cancel(true);
         } catch (Exception e) {
             result = "Execution error: " + e.getMessage() + "\n";
         }
+
+
+        if(!result.equalsIgnoreCase("compilation successful")){
+            return new RunningResult(result+"\n",3000);
+        }
+
+
         Path output = Paths.get(newDirPath.toFile().getAbsolutePath() + "/output.txt");
         Path expectedOutputPath = Paths.get(newDirPath.toFile().getAbsolutePath() + "/expectedOutput.txt");
         boolean isEqual = compareFiles(output, expectedOutputPath);
@@ -87,13 +100,23 @@ public class RunCodeService {
         return new RunningResult((isEqual?"AC\n":"WA\n"),getExecutionTime());
     }
 
+    private long getTimeLimit(String language) {
+        return switch (language){
+            case "java" -> 3;
+            case "python" -> 10;
+            case "cpp","c++"->2;
+            default -> 1;
+        };
+    }
+
     private void createFilesForCodeInputAndOutput(CodeSubmissionRequest codeSubmissionRequest, Path newDirPath,String input,String expectedOutput) {
         try {
             deleteFilesInDirectory(newDirPath.toFile());
             Files.createDirectories(newDirPath);
             // Create the directory if it doesn't exist
+            String languageExtension = getLanguageExtension(codeSubmissionRequest.language());
 
-            Path codeFilePath = newDirPath.resolve("Main.java");
+            Path codeFilePath = newDirPath.resolve("Main."+languageExtension);
             Files.createFile(codeFilePath);
             Files.writeString(codeFilePath, codeSubmissionRequest.code());
 
@@ -110,6 +133,15 @@ public class RunCodeService {
         }
     }
 
+    private String getLanguageExtension(String language) {
+        return switch (language.toLowerCase()) {
+            case "java" -> "java";
+            case "python" -> "py";
+            case "c++", "cpp" -> "cpp";
+            default -> "txt";
+        };
+    }
+
     private int getExecutionTime() {
 
         Path executionTimeFilePath = newDirPath.resolve("executionTime.txt");
@@ -117,7 +149,7 @@ public class RunCodeService {
         try {
             Scanner scanner = new Scanner(executionTimeFilePath);
             if(scanner.hasNextLine()) {
-                return Integer.parseInt(scanner.nextLine().trim().split(" ")[2]);
+                return Integer.parseInt(scanner.nextLine().trim());
             }
         }catch (Exception e) {
             System.err.println("An error occurred: " + e.getMessage());
@@ -162,27 +194,26 @@ public class RunCodeService {
             }
         }
     }
-    private String  executeCode() {
+    private String  executeCode(String language) {
 
         String currentDir = Paths.get("").toAbsolutePath().toString();
         String codeInputOutputPath = currentDir + "/codeInputOutput";
-        String runScriptPath = currentDir + "/docker/java-runner/run.sh";
+        String runScriptPath = currentDir + "/docker/"+language+"-runner/run.sh";
 
         // Construct the Docker command
         String[] command = {
                 "docker", "run","--rm",
                 "-v", codeInputOutputPath + ":/app",
                 "-v", runScriptPath + ":/app/run.sh",
-                "java-runner"
+                language+"-runner"
         };
 
         // Run the Docker command
-        runDockerCommand(command);
-        return null;
+        return runDockerCommand(command);
     }
 
 
-    public static void runDockerCommand(String[] command) {
+    public static String  runDockerCommand(String[] command) {
         try {
             // Use ProcessBuilder to run the command
             ProcessBuilder processBuilder = new ProcessBuilder(command);
@@ -193,17 +224,20 @@ public class RunCodeService {
 
             // Capture the output
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            StringBuilder processOutput = new StringBuilder();
             String line;
             while ((line = reader.readLine()) != null) {
-                System.out.println(line);
+                processOutput.append(line);
             }
 
             // Wait for the process to complete
             int exitCode = process.waitFor();
             System.out.println("Exited with code: " + exitCode);
             process.destroy();
+            return processOutput.toString();
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
+        return "server error";
     }
 }
