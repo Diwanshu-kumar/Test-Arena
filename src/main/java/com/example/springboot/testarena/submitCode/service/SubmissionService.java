@@ -52,7 +52,7 @@ public class SubmissionService {
         submission.setResult(submission.getStatus().equalsIgnoreCase("Compilation successful") ? result : "error");
         submissionRepository.save(submission);
 
-        return new SubmissionStatus("completed", result);
+        return new SubmissionStatus("completed", result,"0");
     }
 
     private String executeCode(Submission submission) throws IOException, InterruptedException {
@@ -60,7 +60,6 @@ public class SubmissionService {
         String code = submission.getCode();
 
         String dockerCommand = getDockerCommand(language);
-
         Process process = Runtime.getRuntime().exec(dockerCommand);
         process.getOutputStream().write(code.getBytes());
         process.getOutputStream().close();

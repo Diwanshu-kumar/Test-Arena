@@ -61,4 +61,12 @@ public class SystemTestCase {
     public void setExpectedOutput(String expectedOutput) {
         this.expectedOutput = expectedOutput;
     }
+
+    @Override
+    public String toString() {
+        return "SystemTestCase{" +
+                "input='" + input + '\'' +
+                ", expectedOutput='" + expectedOutput + '\'' +
+                '}';
+    }
 }

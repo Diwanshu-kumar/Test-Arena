@@ -1,6 +1,12 @@
 package com.example.springboot.testarena.submitCode.service;
 
+import com.example.springboot.testarena.problem.entity.Problem;
+import com.example.springboot.testarena.problem.entity.SystemTestCase;
+import com.example.springboot.testarena.problem.repository.ProblemRepository;
+import com.example.springboot.testarena.problem.repository.SampleTestCaseRepository;
+import com.example.springboot.testarena.problem.repository.SystemTestCaseRepository;
 import com.example.springboot.testarena.submitCode.dto.CodeSubmissionRequest;
+import com.example.springboot.testarena.submitCode.dto.SubmissionStatus;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
@@ -10,31 +16,59 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.*;
 
 @Service
 public class RunCodeService {
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final ProblemRepository problemRepository;
+    private final SystemTestCaseRepository systemTestCaseRepository;
 
-    public String runCode(CodeSubmissionRequest codeSubmissionRequest){
-
-        createNecessaryFiles(codeSubmissionRequest);
-        return null;
+    public RunCodeService(ProblemRepository problemRepository, SampleTestCaseRepository sampleTestCaseRepository, SystemTestCaseRepository systemTestCaseRepository) {
+        this.problemRepository = problemRepository;
+        this.systemTestCaseRepository = systemTestCaseRepository;
     }
 
-    private boolean createNecessaryFiles(CodeSubmissionRequest codeSubmissionRequest){
 
-        String dirName = "codeInputOutput";
+    final private String  dirName = "codeInputOutput";
 
-        // Get the absolute path of the current project directory
-        Path currentProjectPath = Paths.get("").toAbsolutePath();
+    // Get the absolute path of the current project directory
+    final private Path currentProjectPath = Paths.get("").toAbsolutePath();
 
-        // Define the full path for the new directory
-        Path newDirPath = currentProjectPath.resolve(dirName);
+    // Define the full path for the new directory
+    final private Path newDirPath = currentProjectPath.resolve(dirName);
 
-        createFilesForCodeInputAndOutput(codeSubmissionRequest, newDirPath);
+    public SubmissionStatus runOnSystemTestCase(CodeSubmissionRequest codeSubmissionRequest) {
+
+        List<SystemTestCase> systemTestCase =null;
+        Problem problem = problemRepository.findById(codeSubmissionRequest.problemId()).orElse(null);
+
+        if(problem != null) {
+            systemTestCase = systemTestCaseRepository.findByProblem(problem);
+        }
+        StringBuilder result = new StringBuilder();
+        int maximumExecutionTime = 0;
+        if(systemTestCase != null) {
+            for(SystemTestCase testCase : systemTestCase) {
+                RunningResult runningResult = runOnSingleTestFile(codeSubmissionRequest,testCase.getInput(),testCase.getExpectedOutput());
+                result.append(runningResult.verdict());
+                maximumExecutionTime = Math.max(maximumExecutionTime, runningResult.executionTime());
+            }
+        }
+        return new SubmissionStatus(result.toString(),"",String.valueOf(maximumExecutionTime));
+    }
+
+    public record RunningResult(String verdict,int executionTime){}
+
+
+
+    public RunningResult runOnSingleTestFile(CodeSubmissionRequest codeSubmissionRequest, String input, String expectedOutput){
+
+
+        createFilesForCodeInputAndOutput(codeSubmissionRequest, newDirPath,input,expectedOutput);
+
 
         String result;
         Future<String> future = executor.submit(this::executeCode);
@@ -46,23 +80,17 @@ public class RunCodeService {
         } catch (Exception e) {
             result = "Execution error: " + e.getMessage() + "\n";
         }
-        System.out.println("hello");
-        System.out.println(newDirPath.toFile().listFiles().length);
-        // Create the files in the specified directory
-//            System.out.println(Arrays.toString(newDirPath.toFile().listFiles()));
         Path output = Paths.get(newDirPath.toFile().getAbsolutePath() + "/output.txt");
-        Path expectedOutput = Paths.get(newDirPath.toFile().getAbsolutePath() + "/expectedOutput.txt");
-        boolean isEqual = compareFiles(output,expectedOutput);
-        System.out.println(isEqual + "\n");
+        Path expectedOutputPath = Paths.get(newDirPath.toFile().getAbsolutePath() + "/expectedOutput.txt");
+        boolean isEqual = compareFiles(output, expectedOutputPath);
 
-        return false;
+        return new RunningResult((isEqual?"AC\n":"WA\n"),getExecutionTime());
     }
 
-    private void createFilesForCodeInputAndOutput(CodeSubmissionRequest codeSubmissionRequest, Path newDirPath) {
+    private void createFilesForCodeInputAndOutput(CodeSubmissionRequest codeSubmissionRequest, Path newDirPath,String input,String expectedOutput) {
         try {
-            deleteDirectory(newDirPath.toFile());
+            deleteFilesInDirectory(newDirPath.toFile());
             Files.createDirectories(newDirPath);
-            System.out.println("Directory created at: " + newDirPath);
             // Create the directory if it doesn't exist
 
             Path codeFilePath = newDirPath.resolve("Main.java");
@@ -71,15 +99,30 @@ public class RunCodeService {
 
             Path inputFilePath = newDirPath.resolve("input.txt");
             Files.createFile(inputFilePath);
-            Files.writeString(inputFilePath, "4 2 3 1 4 3 2 3 ");
+            Files.writeString(inputFilePath, input);
 
             Path outputFilePath = newDirPath.resolve("expectedOutput.txt");
             Files.createFile(outputFilePath);
-            Files.writeString(outputFilePath, "1 2 3 4 4 3 2");
+            Files.writeString(outputFilePath, expectedOutput);
 
         } catch (IOException e) {
             System.err.println("An error occurred: " + e.getMessage());
         }
+    }
+
+    private int getExecutionTime() {
+
+        Path executionTimeFilePath = newDirPath.resolve("executionTime.txt");
+
+        try {
+            Scanner scanner = new Scanner(executionTimeFilePath);
+            if(scanner.hasNextLine()) {
+                return Integer.parseInt(scanner.nextLine().trim().split(" ")[2]);
+            }
+        }catch (Exception e) {
+            System.err.println("An error occurred: " + e.getMessage());
+        }
+        return 3000;
     }
 
     private boolean compareFiles(Path output, Path expectedOutput) {
@@ -106,19 +149,18 @@ public class RunCodeService {
         return result;
     }
 
-    private void deleteDirectory(File path) {
+    private void deleteFilesInDirectory(File path) {
         if (path.exists()) {
             File[] files = path.listFiles();
             assert files != null;
             for (File file : files) {
                 if (file.isDirectory()) {
-                    deleteDirectory(file);
+                    deleteFilesInDirectory(file);
                 } else {
                     file.delete();
                 }
             }
         }
-        path.delete();
     }
     private String  executeCode() {
 

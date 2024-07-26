@@ -3,6 +3,7 @@ package com.example.springboot.testarena.submitCode.controller;
 import com.example.springboot.testarena.submitCode.dto.CodeSubmissionRequest;
 import com.example.springboot.testarena.submitCode.dto.SubmissionStatus;
 import com.example.springboot.testarena.submitCode.repository.SubmissionRepository;
+import com.example.springboot.testarena.submitCode.service.RunCodeService;
 import com.example.springboot.testarena.submitCode.service.SubmissionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +16,8 @@ public class SubmissionController {
     SubmissionService submissionService;
     @Autowired
     SubmissionRepository submissionRepository;
+    @Autowired
+    private RunCodeService runCodeService;
 
     @PostMapping("submit")
     public SubmissionStatus submitCode(@RequestBody CodeSubmissionRequest codeSubmissionRequest){
@@ -27,11 +30,11 @@ public class SubmissionController {
     @PostMapping("run")
     public SubmissionStatus runCode(@RequestBody CodeSubmissionRequest codeSubmissionRequest){
         System.out.println("run : "+ codeSubmissionRequest);
-        return new SubmissionStatus("","");
+        return runCodeService.runOnSystemTestCase(codeSubmissionRequest);
     }
 
     @GetMapping("status{submissionId}")
     public SubmissionStatus getStatus(@PathVariable String submissionId){
-        return new SubmissionStatus("","");
+        return new SubmissionStatus("","","");
     }
 }
