@@ -7,6 +7,8 @@ import com.example.springboot.testarena.problem.repository.SampleTestCaseReposit
 import com.example.springboot.testarena.problem.repository.SystemTestCaseRepository;
 import com.example.springboot.testarena.submitCode.dto.CodeSubmissionRequest;
 import com.example.springboot.testarena.submitCode.dto.SubmissionStatus;
+import com.example.springboot.testarena.submitCode.entity.Submission;
+import com.example.springboot.testarena.submitCode.repository.SubmissionRepository;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
@@ -16,6 +18,7 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.*;
@@ -24,7 +27,9 @@ import java.util.concurrent.*;
 public class RunCodeService {
 
 
-    public record RunningResult(String verdict,int executionTime){}
+    private final SubmissionRepository submissionRepository;
+
+    public record RunningResult(String verdict,int runningType, int executionTime){}
 
 
 
@@ -32,9 +37,10 @@ public class RunCodeService {
     private final ProblemRepository problemRepository;
     private final SystemTestCaseRepository systemTestCaseRepository;
 
-    public RunCodeService(ProblemRepository problemRepository, SampleTestCaseRepository sampleTestCaseRepository, SystemTestCaseRepository systemTestCaseRepository) {
+    public RunCodeService(ProblemRepository problemRepository, SampleTestCaseRepository sampleTestCaseRepository, SystemTestCaseRepository systemTestCaseRepository, SubmissionRepository submissionRepository) {
         this.problemRepository = problemRepository;
         this.systemTestCaseRepository = systemTestCaseRepository;
+        this.submissionRepository = submissionRepository;
     }
 
 
@@ -48,6 +54,14 @@ public class RunCodeService {
 
     public SubmissionStatus runOnSystemTestCase(CodeSubmissionRequest codeSubmissionRequest) {
 
+        Submission submission = new Submission();
+        submission.setUserId(codeSubmissionRequest.userId());
+        submission.setProblemId(codeSubmissionRequest.problemId());
+        submission.setCode(codeSubmissionRequest.code());
+        submission.setLanguage(codeSubmissionRequest.language());
+        submission.setStatus("processing");
+        submission.setSubmissionTime(LocalDateTime.now());
+
         List<SystemTestCase> systemTestCase =null;
         Problem problem = problemRepository.findById(codeSubmissionRequest.problemId()).orElse(null);
 
@@ -56,14 +70,21 @@ public class RunCodeService {
         }
         StringBuilder result = new StringBuilder();
         int maximumExecutionTime = 0;
+        int errorType =0;
         if(systemTestCase != null) {
             for(SystemTestCase testCase : systemTestCase) {
                 RunningResult runningResult = runOnSingleTestFile(codeSubmissionRequest,testCase.getInput(),testCase.getExpectedOutput());
                 result.append(runningResult.verdict());
+                errorType = Math.max(runningResult.runningType(),errorType);
                 maximumExecutionTime = Math.max(maximumExecutionTime, runningResult.executionTime());
             }
         }
-        return new SubmissionStatus(result.toString(),"",String.valueOf(maximumExecutionTime));
+
+        submission.setResult(result.toString());
+        submission.setStatus((errorType==0)?"AC":(errorType==1)?"WA":"RE");
+        submission.setExecutionTime(maximumExecutionTime+"");
+        submissionRepository.save(submission);
+        return new SubmissionStatus(submission.getStatus(),result.toString(),String.valueOf(maximumExecutionTime));
     }
 
 
@@ -89,15 +110,15 @@ public class RunCodeService {
 
 
         if(!result.equalsIgnoreCase("compilation successful")){
-            return new RunningResult(result+"\n",3000);
+            return new RunningResult(result+"\n",2,3000);
         }
 
 
         Path output = Paths.get(newDirPath.toFile().getAbsolutePath() + "/output.txt");
-        Path expectedOutputPath = Paths.get(newDirPath.toFile().getAbsolutePath() + "/expectedOutput.txt");
-        boolean isEqual = compareFiles(output, expectedOutputPath);
+//        Path expectedOutputPath = Paths.get(newDirPath.toFile().getAbsolutePath() + "/expectedOutput.txt");
+        boolean isEqual = compareFiles(output, expectedOutput);
 
-        return new RunningResult((isEqual?"AC\n":"WA\n"),getExecutionTime());
+        return new RunningResult((isEqual?"AC\n":"WA\n"),(isEqual?0:1),getExecutionTime());
     }
 
     private long getTimeLimit(String language) {
@@ -123,10 +144,6 @@ public class RunCodeService {
             Path inputFilePath = newDirPath.resolve("input.txt");
             Files.createFile(inputFilePath);
             Files.writeString(inputFilePath, input);
-
-            Path outputFilePath = newDirPath.resolve("expectedOutput.txt");
-            Files.createFile(outputFilePath);
-            Files.writeString(outputFilePath, expectedOutput);
 
         } catch (IOException e) {
             System.err.println("An error occurred: " + e.getMessage());
@@ -157,7 +174,7 @@ public class RunCodeService {
         return 3000;
     }
 
-    private boolean compareFiles(Path output, Path expectedOutput) {
+    private boolean compareFiles(Path output, String  expectedOutput) {
         boolean result;
         try {
 
