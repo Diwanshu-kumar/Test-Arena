@@ -1,6 +1,6 @@
 #!/bin/bash
 #compile the code
-g++ -o main main.cpp 2> error.txt
+g++ -o Main Main.cpp 2> error.txt
 #run the code
 # Check if compilation was successful
 if [ $? -ne 0 ]; then
