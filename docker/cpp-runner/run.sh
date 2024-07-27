@@ -1,11 +1,7 @@
 #!/bin/bash
-
 #compile the code
-
 g++ -o main main.cpp 2> error.txt
-
 #run the code
-
 # Check if compilation was successful
 if [ $? -ne 0 ]; then
     # If there was an error, return the error log

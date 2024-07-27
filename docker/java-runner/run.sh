@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # Compile the Java code and capture errors
 javac Main.java 2> error.log
 

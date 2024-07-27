@@ -1,14 +1,10 @@
 #!/bin/bash
-
 #run the code
-
 # Capture start time in nanoseconds
 START=$(date +%s%N)
-
 # Run cpp program
 output=$(python Main.py <input.txt 2>&1)
 program_exit_code=$?
-
 # Capture end time in nanoseconds
 END=$(date +%s%N)
 
