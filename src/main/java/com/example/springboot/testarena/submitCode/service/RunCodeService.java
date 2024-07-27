@@ -10,10 +10,7 @@ import com.example.springboot.testarena.submitCode.entity.Submission;
 import com.example.springboot.testarena.submitCode.repository.SubmissionRepository;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -86,10 +83,44 @@ public class RunCodeService {
         return new SubmissionStatus(submission.getStatus(),result.toString(),String.valueOf(maximumExecutionTime));
     }
 
+    public SubmissionStatus runOnSampleTestCase(CodeSubmissionRequest codeSubmissionRequest) {
+        Problem problem = problemRepository.findById(codeSubmissionRequest.problemId()).orElse(null);
+        String sampleInput, sampleExpectedOutput;
+        if(problem != null) {
+            sampleInput = problem.getSampleInput();
+            sampleExpectedOutput = problem.getSampleOutput();
+            RunningResult  runningResult = runOnSingleTestFile(codeSubmissionRequest,sampleInput,sampleExpectedOutput);
 
+            if(runningResult.runningType()<=1){
+                Path output = Paths.get(newDirPath.toFile().getAbsolutePath() + "/output.txt");
+                String sampleOutput = readFile(output);
+                return new SubmissionStatus(runningResult.verdict(),sampleOutput,String.valueOf(runningResult.executionTime()));
+            }else{
+                Path error = Paths.get(newDirPath.toFile().getAbsolutePath() + "/error.txt");
+                String errorOutput = readFile(error);
+                return new SubmissionStatus(runningResult.verdict(),errorOutput,String.valueOf(runningResult.executionTime()));
+            }
+        }else{
+            return new SubmissionStatus("problem not exist","","0");
+        }
 
+    }
 
-    public RunningResult runOnSingleTestFile(CodeSubmissionRequest codeSubmissionRequest, String input, String expectedOutput){
+    private String readFile(Path path) {
+        try {
+            Scanner scanner = new Scanner(path.toFile());
+            StringBuilder result = new StringBuilder();
+            while(scanner.hasNextLine()) {
+                result.append(scanner.nextLine()).append("\n");
+            }
+            return result.toString();
+        }catch (FileNotFoundException ignored) {
+
+        }
+        return "file not found";
+    }
+
+    private RunningResult runOnSingleTestFile(CodeSubmissionRequest codeSubmissionRequest, String input, String expectedOutput){
 
 
         createFilesForCodeInputAndOutput(codeSubmissionRequest, newDirPath,input,expectedOutput);
