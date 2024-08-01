@@ -1,15 +1,15 @@
 package com.example.springboot.testarena.problem.controller;
 
 import com.example.springboot.testarena.problem.dto.ProblemSubmissionRequest;
+import com.example.springboot.testarena.problem.entity.Problem;
 import com.example.springboot.testarena.problem.service.ProblemService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/user/problem/")
+@RequestMapping("/api/v1/problem/")
 public class ProblemController {
 
     private final ProblemService problemService;
@@ -18,10 +18,30 @@ public class ProblemController {
         this.problemService = problemService;
     }
 
-    @PostMapping("newProblem")
+    @PostMapping("user/newProblem")
     public ResponseEntity<String > addProblem(@RequestBody ProblemSubmissionRequest problemSubmissionRequest) {
         problemService.addNewProblem(problemSubmissionRequest);
         return ResponseEntity.ok("Problem added");
     }
 
+    @GetMapping("user/problems")
+    public ResponseEntity<List<Problem>> getAllProblems() {
+        return ResponseEntity.ok(problemService.getAllProblem("accepted"));
+    }
+
+    @GetMapping("admin/problems")
+    public ResponseEntity<List<Problem>> getAllAdminProblems(@RequestParam String status) {
+        return ResponseEntity.ok(problemService.getAllProblem(status));
+    }
+
+    @DeleteMapping("admin/delete")
+    public ResponseEntity<String> deleteProblem(@RequestParam Long problemId) {
+        return ResponseEntity.ok(problemService.deleteProblem(problemId));
+    }
+
+    @PutMapping("admin/update")
+    public ResponseEntity<String> updateProblem(
+            @RequestParam  long problemId, @RequestParam String status) {
+        return ResponseEntity.ok(problemService.updateProblem(problemId,status));
+    }
 }
