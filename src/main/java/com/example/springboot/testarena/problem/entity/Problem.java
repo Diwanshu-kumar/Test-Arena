@@ -9,16 +9,18 @@ public class Problem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long problemId;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String title;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "MEDIUMTEXT")
     private String description;
 
     private String author;
 
+    @Column(columnDefinition = "TEXT")
     private String problemConstraint;
 
+    @Column(columnDefinition = "MEDIUMTEXT")
     private String explanation;
 
     private String status;
