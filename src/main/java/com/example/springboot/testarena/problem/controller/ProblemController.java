@@ -27,7 +27,7 @@ public class ProblemController {
 
     @GetMapping("user/problems")
     public ResponseEntity<List<Problem>> getAllProblems() {
-        return ResponseEntity.ok(problemService.getAllProblem("accepted"));
+        return ResponseEntity.ok(problemService.getAllProblem("approved"));
     }
 
     @GetMapping("details")
