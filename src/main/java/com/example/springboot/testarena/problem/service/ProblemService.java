@@ -87,4 +87,8 @@ public class ProblemService {
         }
         return "problem not found";
     }
+
+    public Problem getProblemById(long problemId){
+        return problemRepository.findById(problemId).orElse(null);
+    }
 }

@@ -5,6 +5,7 @@ import com.example.springboot.testarena.submitCode.dto.SubmissionStatus;
 import com.example.springboot.testarena.submitCode.service.RunCodeService;
 import org.springframework.web.bind.annotation.*;
 
+@CrossOrigin
 @RestController
 @RequestMapping("/api/v1/user/")
 public class SubmissionController {

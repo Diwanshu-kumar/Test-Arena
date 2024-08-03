@@ -10,6 +10,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/problem/")
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 public class ProblemController {
 
     private final ProblemService problemService;
@@ -27,6 +28,15 @@ public class ProblemController {
     @GetMapping("user/problems")
     public ResponseEntity<List<Problem>> getAllProblems() {
         return ResponseEntity.ok(problemService.getAllProblem("accepted"));
+    }
+
+    @GetMapping("details")
+    public ResponseEntity<Problem> getProblemDescription(@RequestParam long problemId) {
+        Problem problem = problemService.getProblemById(problemId);
+        if (problem == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(problem);
     }
 
     @GetMapping("admin/problems")
