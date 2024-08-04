@@ -5,7 +5,6 @@ import com.example.springboot.testarena.user.entity.Role;
 import com.example.springboot.testarena.user.entity.RoleName;
 import com.example.springboot.testarena.user.entity.User;
 import com.example.springboot.testarena.user.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -21,7 +20,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api/v1/auth")
+@CrossOrigin
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
@@ -50,7 +50,7 @@ public class AuthController {
 
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             String jwt = jwtUtil.generateToken(userDetails.getUsername());
-            return ResponseEntity.ok(new AuthResponse(jwt));
+            return ResponseEntity.ok(new AuthResponse(jwt,userDetails.getUsername()));
         } catch (AuthenticationException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");
         }
@@ -59,8 +59,13 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody User user) {
         try {
-            userService.loadUserByUsername(user.getUsername());
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Username already taken");
+            try {
+                userService.loadUserByUsername(user.getUsername());
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("Username is already taken");
+
+            }catch (UsernameNotFoundException ignored) {}
+            userService.loadUserByUsername(user.getEmail());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Email is already in use");
         } catch (UsernameNotFoundException e) {
             user.setPassword(passwordEncoder.encode(user.getPassword()));
             Set<Role> roles = new HashSet<>();
@@ -101,5 +106,5 @@ class AuthRequest {
     }
 }
 
-record AuthResponse(String jwt) {
+record AuthResponse(String jwt, String username) {
 }
