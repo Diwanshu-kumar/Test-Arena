@@ -8,6 +8,8 @@ import com.example.springboot.testarena.submitCode.dto.CodeSubmissionRequest;
 import com.example.springboot.testarena.submitCode.dto.SubmissionStatus;
 import com.example.springboot.testarena.submitCode.entity.Submission;
 import com.example.springboot.testarena.submitCode.repository.SubmissionRepository;
+import com.example.springboot.testarena.user.entity.User;
+import com.example.springboot.testarena.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
@@ -24,6 +26,7 @@ public class RunCodeService {
 
 
     private final SubmissionRepository submissionRepository;
+    private final UserRepository userRepository;
 
     public record RunningResult(String verdict,int runningType, int executionTime){}
 
@@ -33,10 +36,11 @@ public class RunCodeService {
     private final ProblemRepository problemRepository;
     private final SystemTestCaseRepository systemTestCaseRepository;
 
-    public RunCodeService(ProblemRepository problemRepository, SystemTestCaseRepository systemTestCaseRepository, SubmissionRepository submissionRepository) {
+    public RunCodeService(ProblemRepository problemRepository, SystemTestCaseRepository systemTestCaseRepository, SubmissionRepository submissionRepository, UserRepository userRepository) {
         this.problemRepository = problemRepository;
         this.systemTestCaseRepository = systemTestCaseRepository;
         this.submissionRepository = submissionRepository;
+        this.userRepository = userRepository;
     }
 
 
@@ -49,9 +53,9 @@ public class RunCodeService {
     final private Path newDirPath = currentProjectPath.resolve(dirName);
 
     public SubmissionStatus runOnSystemTestCase(CodeSubmissionRequest codeSubmissionRequest) {
-
+        User user = userRepository.findByUsername(codeSubmissionRequest.username());
         Submission submission = new Submission();
-        submission.setUserId(codeSubmissionRequest.userId());
+        submission.setUserId(user.getId());
         submission.setProblemId(codeSubmissionRequest.problemId());
         submission.setCode(codeSubmissionRequest.code());
         submission.setLanguage(codeSubmissionRequest.language());
@@ -145,7 +149,6 @@ public class RunCodeService {
 
 
         Path output = Paths.get(newDirPath.toFile().getAbsolutePath() + "/output.txt");
-//        Path expectedOutputPath = Paths.get(newDirPath.toFile().getAbsolutePath() + "/expectedOutput.txt");
         boolean isEqual = compareFiles(output, expectedOutput);
 
         return new RunningResult((isEqual?"AC\n":"WA\n"),(isEqual?0:1),getExecutionTime());
