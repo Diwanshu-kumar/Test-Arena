@@ -29,7 +29,9 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable) // Disable CSRF for simplicity, if not using session cookies
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                        .requestMatchers("/api/auth/**").permitAll() // Allow access to /api/auth/** endpoints
+                        .requestMatchers("/api/v1/auth/**").permitAll() // Allow access to /api/auth/** endpoints
+                        .requestMatchers("/api/v1/problem/user/problems").permitAll()
+                        .requestMatchers("/api/v1/problem/details").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
