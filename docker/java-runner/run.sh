@@ -1,6 +1,6 @@
 #!/bin/bash
 # Compile the Java code and capture errors
-javac Main.java 2> error.log
+javac Main.java 2> error.txt
 
 # Check if compilation was successful
 if [ $? -ne 0 ]; then
