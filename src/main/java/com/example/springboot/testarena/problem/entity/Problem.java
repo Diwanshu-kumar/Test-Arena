@@ -12,6 +12,8 @@ public class Problem {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String title;
 
+    private String difficulty;
+
     @Column(nullable = false, columnDefinition = "MEDIUMTEXT")
     private String description;
 
@@ -101,5 +103,13 @@ public class Problem {
 
     public void setSampleOutput(String sampleOutput) {
         this.sampleOutput = sampleOutput;
+    }
+
+    public String getDifficulty() {
+        return difficulty;
+    }
+
+    public void setDifficulty(String difficulty) {
+        this.difficulty = difficulty;
     }
 }

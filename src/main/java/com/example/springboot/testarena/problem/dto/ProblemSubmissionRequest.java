@@ -8,6 +8,8 @@ public class ProblemSubmissionRequest {
 
     private String title;
 
+    private String difficulty;
+
     private String description;
 
     private String author;
@@ -22,8 +24,9 @@ public class ProblemSubmissionRequest {
     private List<TestCase> systemTestCase;
 
 
-    public ProblemSubmissionRequest(String title, String description, String author, String problemConstraint, String explanation, String sampleInput, String sampleOutput, List<TestCase> systemTestCase) {
+    public ProblemSubmissionRequest(String title, String difficulty, String description, String author, String problemConstraint, String explanation, String sampleInput, String sampleOutput, List<TestCase> systemTestCase) {
         this.title = title;
+        this.difficulty = difficulty;
         this.description = description;
         this.author = author;
         this.problemConstraint = problemConstraint;
@@ -95,5 +98,13 @@ public class ProblemSubmissionRequest {
 
     public void setSampleOutput(String sampleOutput) {
         this.sampleOutput = sampleOutput;
+    }
+
+    public String getDifficulty() {
+        return difficulty;
+    }
+
+    public void setDifficulty(String difficulty) {
+        this.difficulty = difficulty;
     }
 }

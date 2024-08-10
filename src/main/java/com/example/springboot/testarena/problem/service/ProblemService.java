@@ -47,6 +47,7 @@ public class ProblemService {
     private Problem addProblem(ProblemSubmissionRequest problemSubmissionRequest) {
         Problem problem = new Problem();
         problem.setTitle(problemSubmissionRequest.getTitle());
+        problem.setDifficulty(problemSubmissionRequest.getDifficulty());
         problem.setDescription(problemSubmissionRequest.getDescription());
         problem.setAuthor(problemSubmissionRequest.getAuthor());
         problem.setProblemConstraint(problemSubmissionRequest.getProblemConstraint());
