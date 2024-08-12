@@ -20,6 +20,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 public class RunCodeService {
@@ -30,7 +32,7 @@ public class RunCodeService {
 
     public record RunningResult(String verdict,int runningType, int executionTime){}
 
-
+    private final Lock lock = new ReentrantLock();
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final ProblemRepository problemRepository;
@@ -71,14 +73,17 @@ public class RunCodeService {
         StringBuilder result = new StringBuilder();
         int maximumExecutionTime = 0;
         int errorType =0;
-        if(systemTestCase != null) {
-            for(SystemTestCase testCase : systemTestCase) {
-                RunningResult runningResult = runOnSingleTestFile(codeSubmissionRequest,testCase.getInput(),testCase.getExpectedOutput());
+
+        lock.lock();
+        if (systemTestCase != null) {
+            for (SystemTestCase testCase : systemTestCase) {
+                RunningResult runningResult = runOnSingleTestFile(codeSubmissionRequest, testCase.getInput(), testCase.getExpectedOutput());
                 result.append(runningResult.verdict());
-                errorType = Math.max(runningResult.runningType(),errorType);
+                errorType = Math.max(runningResult.runningType(), errorType);
                 maximumExecutionTime = Math.max(maximumExecutionTime, runningResult.executionTime());
             }
         }
+        lock.unlock();
 
         submission.setResult(result.toString());
         submission.setStatus((errorType==0)?"AC":(errorType==1)?"WA":"RE");
@@ -93,17 +98,22 @@ public class RunCodeService {
         if(problem != null) {
             sampleInput = problem.getSampleInput();
             sampleExpectedOutput = problem.getSampleOutput();
-            RunningResult  runningResult = runOnSingleTestFile(codeSubmissionRequest,sampleInput,sampleExpectedOutput);
+            lock.lock();
 
+            RunningResult  runningResult = runOnSingleTestFile(codeSubmissionRequest,sampleInput,sampleExpectedOutput);
+            SubmissionStatus submissionStatus;
             if(runningResult.runningType()<=1){
                 Path output = Paths.get(newDirPath.toFile().getAbsolutePath() + "/output.txt");
                 String sampleOutput = readFile(output);
-                return new SubmissionStatus(runningResult.verdict(),sampleOutput,String.valueOf(runningResult.executionTime()));
+                submissionStatus = new SubmissionStatus(runningResult.verdict(),sampleOutput,String.valueOf(runningResult.executionTime()));
             }else{
                 Path error = Paths.get(newDirPath.toFile().getAbsolutePath() + "/error.txt");
                 String errorOutput = readFile(error);
-                return new SubmissionStatus(runningResult.verdict(),errorOutput,String.valueOf(runningResult.executionTime()));
+                submissionStatus =  new SubmissionStatus(runningResult.verdict(),errorOutput,String.valueOf(runningResult.executionTime()));
             }
+
+            lock.unlock();
+            return submissionStatus;
         }else{
             return new SubmissionStatus("problem not exist","","0");
         }
