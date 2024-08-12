@@ -5,6 +5,7 @@ import com.example.springboot.testarena.problem.entity.SystemTestCase;
 import com.example.springboot.testarena.problem.repository.ProblemRepository;
 import com.example.springboot.testarena.problem.repository.SystemTestCaseRepository;
 import com.example.springboot.testarena.submitCode.dto.CodeSubmissionRequest;
+import com.example.springboot.testarena.submitCode.dto.CodeSubmissionWithCustomTestcase;
 import com.example.springboot.testarena.submitCode.dto.SubmissionStatus;
 import com.example.springboot.testarena.submitCode.entity.Submission;
 import com.example.springboot.testarena.submitCode.repository.SubmissionRepository;
@@ -77,7 +78,7 @@ public class RunCodeService {
         lock.lock();
         if (systemTestCase != null) {
             for (SystemTestCase testCase : systemTestCase) {
-                RunningResult runningResult = runOnSingleTestFile(codeSubmissionRequest, testCase.getInput(), testCase.getExpectedOutput());
+                RunningResult runningResult = runOnSingleTestFile(codeSubmissionRequest.code(),codeSubmissionRequest.language(), testCase.getInput(), testCase.getExpectedOutput());
                 result.append(runningResult.verdict());
                 errorType = Math.max(runningResult.runningType(), errorType);
                 maximumExecutionTime = Math.max(maximumExecutionTime, runningResult.executionTime());
@@ -98,26 +99,39 @@ public class RunCodeService {
         if(problem != null) {
             sampleInput = problem.getSampleInput();
             sampleExpectedOutput = problem.getSampleOutput();
-            lock.lock();
-
-            RunningResult  runningResult = runOnSingleTestFile(codeSubmissionRequest,sampleInput,sampleExpectedOutput);
-            SubmissionStatus submissionStatus;
-            if(runningResult.runningType()<=1){
-                Path output = Paths.get(newDirPath.toFile().getAbsolutePath() + "/output.txt");
-                String sampleOutput = readFile(output);
-                submissionStatus = new SubmissionStatus(runningResult.verdict(),sampleOutput,String.valueOf(runningResult.executionTime()));
-            }else{
-                Path error = Paths.get(newDirPath.toFile().getAbsolutePath() + "/error.txt");
-                String errorOutput = readFile(error);
-                submissionStatus =  new SubmissionStatus(runningResult.verdict(),errorOutput,String.valueOf(runningResult.executionTime()));
-            }
-
-            lock.unlock();
-            return submissionStatus;
+            return getSubmissionStatus(codeSubmissionRequest.code(),codeSubmissionRequest.language(), sampleInput, sampleExpectedOutput);
         }else{
             return new SubmissionStatus("problem not exist","","0");
         }
 
+    }
+
+    public SubmissionStatus runOnCustomTestCase(CodeSubmissionWithCustomTestcase codeSubmissionWithCustomTestcase) {
+        if(codeSubmissionWithCustomTestcase.customInput() != null) {
+            return getSubmissionStatus(codeSubmissionWithCustomTestcase.code(),codeSubmissionWithCustomTestcase.language(),
+                    codeSubmissionWithCustomTestcase.customInput(), "");
+        }else{
+            return new SubmissionStatus("custom testcase is empty","","0");
+        }
+    }
+
+    private SubmissionStatus getSubmissionStatus(String code, String language , String sampleInput, String sampleExpectedOutput) {
+        lock.lock();
+
+        RunningResult  runningResult = runOnSingleTestFile(code,language, sampleInput, sampleExpectedOutput);
+        SubmissionStatus submissionStatus;
+        if(runningResult.runningType()<=1){
+            Path output = Paths.get(newDirPath.toFile().getAbsolutePath() + "/output.txt");
+            String sampleOutput = readFile(output);
+            submissionStatus = new SubmissionStatus("",sampleOutput,String.valueOf(runningResult.executionTime()));
+        }else{
+            Path error = Paths.get(newDirPath.toFile().getAbsolutePath() + "/error.txt");
+            String errorOutput = readFile(error);
+            submissionStatus =  new SubmissionStatus("",errorOutput,String.valueOf(runningResult.executionTime()));
+        }
+
+        lock.unlock();
+        return submissionStatus;
     }
 
     private String readFile(Path path) {
@@ -134,15 +148,14 @@ public class RunCodeService {
         return "file not found";
     }
 
-    private RunningResult runOnSingleTestFile(CodeSubmissionRequest codeSubmissionRequest, String input, String expectedOutput){
+    private RunningResult runOnSingleTestFile(String code, String language , String input, String expectedOutput){
 
 
-        createFilesForCodeInputAndOutput(codeSubmissionRequest, newDirPath,input,expectedOutput);
+        createFilesForCodeInputAndOutput(code,language, newDirPath,input);
 
 
         String result;
-        String language = codeSubmissionRequest.language().toLowerCase();
-        Future<String> future = executor.submit(()->executeCode(language));
+        Future<String> future = executor.submit(()->executeCode(language.toLowerCase()));
         try {
             result = future.get(getTimeLimit(language), TimeUnit.SECONDS);
         } catch (TimeoutException e) {
@@ -173,16 +186,16 @@ public class RunCodeService {
         };
     }
 
-    private void createFilesForCodeInputAndOutput(CodeSubmissionRequest codeSubmissionRequest, Path newDirPath,String input,String expectedOutput) {
+    private void createFilesForCodeInputAndOutput(String code,String language , Path newDirPath,String input) {
         try {
             deleteFilesInDirectory(newDirPath.toFile());
             Files.createDirectories(newDirPath);
             // Create the directory if it doesn't exist
-            String languageExtension = getLanguageExtension(codeSubmissionRequest.language());
+            String languageExtension = getLanguageExtension(language);
 
             Path codeFilePath = newDirPath.resolve("Main."+languageExtension);
             Files.createFile(codeFilePath);
-            Files.writeString(codeFilePath, codeSubmissionRequest.code());
+            Files.writeString(codeFilePath, code);
 
             Path inputFilePath = newDirPath.resolve("input.txt");
             Files.createFile(inputFilePath);

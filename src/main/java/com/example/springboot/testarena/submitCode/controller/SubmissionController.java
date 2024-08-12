@@ -1,9 +1,6 @@
 package com.example.springboot.testarena.submitCode.controller;
 
-import com.example.springboot.testarena.submitCode.dto.CodeSubmissionRequest;
-import com.example.springboot.testarena.submitCode.dto.SubmissionStatus;
-import com.example.springboot.testarena.submitCode.dto.SubmittedCode;
-import com.example.springboot.testarena.submitCode.dto.mySubmission;
+import com.example.springboot.testarena.submitCode.dto.*;
 import com.example.springboot.testarena.submitCode.service.RunCodeService;
 import com.example.springboot.testarena.submitCode.service.ServeUserService;
 import org.springframework.http.ResponseEntity;
@@ -32,6 +29,11 @@ public class SubmissionController {
     @PostMapping("run")
     public SubmissionStatus runCode(@RequestBody CodeSubmissionRequest codeSubmissionRequest){
         return runCodeService.runOnSampleTestCase(codeSubmissionRequest);
+    }
+
+    @PostMapping("runOnCustomTestcase")
+    public  SubmissionStatus runOnCustomTestcase(@RequestBody CodeSubmissionWithCustomTestcase codeSubmissionWithCustomTestcase){
+        return runCodeService.runOnCustomTestCase(codeSubmissionWithCustomTestcase);
     }
 
     @GetMapping("submissions")
