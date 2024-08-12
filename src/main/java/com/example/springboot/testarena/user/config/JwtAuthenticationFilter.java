@@ -10,7 +10,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
-
+import java.io.IOException;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -24,13 +24,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
-            throws java.io.IOException, ServletException {
+            throws IOException, ServletException {
         String header = request.getHeader("Authorization");
         String username = null;
         String jwt = null;
 
         if (header != null && header.startsWith("Bearer ")) {
             jwt = header.substring(7);
+            if(jwtUtil.isTokenExpired(jwt)){
+                // Token is not valid or has expired
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json");
+                response.getWriter().write("{\"message\":\"Session has expired or is invalid. Please log in again.\"}");
+                return; // Stop further processing
+            }
             username = jwtUtil.extractUsername(jwt);
         }
 

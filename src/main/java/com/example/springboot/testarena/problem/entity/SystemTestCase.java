@@ -13,10 +13,10 @@ public class SystemTestCase {
     @JoinColumn(name = "problem_id", nullable = false)
     private Problem problem;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(nullable = false, columnDefinition = "MEDIUMTEXT")
     private String input;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(nullable = false, columnDefinition = "MEDIUMTEXT")
     private String expectedOutput;
 
 
