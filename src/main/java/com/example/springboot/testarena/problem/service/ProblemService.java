@@ -33,10 +33,6 @@ public class ProblemService {
     private void addTestCase(ProblemSubmissionRequest problemSubmissionRequest, long problemId) {
         Problem problem = problemRepository.findById(problemId).orElse(null);
         if (problem == null) {return;}
-//        for(TestCase testCase : problemSubmissionRequest.getSampleTestCase()){
-//            SampleTestCase sampleTestCase = new SampleTestCase(problem, testCase.input(), testCase.expectedOutput());
-//            sampleTestCaseRepository.save(sampleTestCase);
-//        }
 
         for(TestCase testCase : problemSubmissionRequest.getSystemTestCase()){
             SystemTestCase systemTestCase = new SystemTestCase(problem, testCase.input(), testCase.expectedOutput());
@@ -62,7 +58,7 @@ public class ProblemService {
     }
 
     public List<Problem> getAllProblem(String status){
-        System.out.println(status);
+//        System.out.println(status);
         return problemRepository.findByStatus(status);
     }
 

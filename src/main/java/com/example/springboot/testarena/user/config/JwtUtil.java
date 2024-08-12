@@ -60,7 +60,7 @@ public class JwtUtil {
                     .setSigningKey(SECRET_KEY)
                     .build();
             return parser.parseClaimsJws(token).getBody();
-        }catch (ExpiredJwtException e){
+        }catch (ExpiredJwtException | SignatureException e){
             return null;
         }
     }

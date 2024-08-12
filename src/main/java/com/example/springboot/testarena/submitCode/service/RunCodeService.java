@@ -292,7 +292,7 @@ public class RunCodeService {
 
             // Wait for the process to complete
             int exitCode = process.waitFor();
-            System.out.println("Exited with code: " + exitCode);
+//            System.out.println("Exited with code: " + exitCode);
             process.destroy();
             return processOutput.toString();
         } catch (IOException | InterruptedException e) {
