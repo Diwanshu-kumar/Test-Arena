@@ -32,6 +32,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/**", "/api/v1/test").permitAll() // Allow access to /api/auth/** endpoints
                         .requestMatchers("/api/v1/problem/user/problems").permitAll()
                         .requestMatchers("/api/v1/problem/details").permitAll()
+                        .requestMatchers("/api/v1/problem/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
